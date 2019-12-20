@@ -7,10 +7,11 @@ class ProcessData():
     @staticmethod
     def parseData(data):
         try:
+            data = str(data).replace('b\'','').replace('\'','')
             parsed = data.split(',')
             parsedData = {}
             for x in parsed:
-                parsedData[str(x.split(':')[0]).replace("b\'", "")] = float(x.split(':')[1].replace('\\n\'', ''))
+                parsedData[x.split(':')[0]] = float(x.split(':')[1])
             return parsedData
         except:
             return {'leftEncoderValue':math.nan, 'rightEncoderValue':math.nan, 'leftEncoderVelocity':math.nan, 'rightEncoderVelocity':math.nan, 'leftEncoderAcceleration':math.nan, 'rightEncoderAcceleration':math.nan}

@@ -1,6 +1,7 @@
 import java.io.*;
-import java.net.*;
-
+import org.zeromq.SocketType;
+import org.zeromq.ZMQ;
+import org.zeromq.ZContext;
 
 class EncoderDataSender {
 
@@ -11,53 +12,19 @@ class EncoderDataSender {
 	private static double[] encoderAcceleration = {-1.4, -1.5};
 
 
-	public static void main(String[] argv) throws UnknownHostException, IOException{
-		
-		try{
-
-			// Intializes a socket to null so that we don't get 'cannot find symbol' error
-			Socket s = null;
-			boolean connected = false;
+	public static void main(String[] argv) throws Exception {
+		// Try to create a new ZContext
+		try (ZContext context = new ZContext()) {
+			// Create a new ZMQ PUB Socket
+			ZMQ.Socket sender = context.createSocket(ZMQ.PUB);
+			// Connect the ZMQ PUB Socket to localhost on port 12345
+			sender.connect("tcp://localhost:12345");
 			
-			// This will keep trying to connect back to the driver station until it is succesful
-			while (!connected){
-			
-				try {
-			
-					s = new Socket("127.0.0.1", 12345);
-					connected = true;
-			
-				} catch (Exception e){}
-			
+			// Constantly publish the encoder data to the ZMQ PUB Socket
+			while (true){
+				sender.send(generateDataString(encoderTicks, encoderVelocity, encoderAcceleration));
 			}
-
-			// Establishes an output stream to the socket
-			PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-
-
-
-			// While the socket is not closed it will send the encoder data and then sleep for 10 milliseconds, this was to prevent writing to the output stream to fast.
-			while (!s.isClosed()){
-			
-				out.println(generateDataString(encoderTicks, encoderVelocity, encoderAcceleration));
-				out.flush();
-				Thread.sleep(10);
-			
-			}
-
-
-			// Closes the output stream and socket
-			out.close();
-			s.close();
-
-		} catch (Exception e){
-
-			// This will catch any errors that may occur
-
-			System.out.println("Error sending data!");
-
-		}
-	
+		}	
 	}
 
 	// This method takes in three double arrays and generates a string containing their values
